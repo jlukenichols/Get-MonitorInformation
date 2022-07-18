@@ -1,1 +1,0 @@
-﻿This code has been upgraded and moved [here](https://github.com/rstolpe/PowerShell-Scripts/blob/main/Windows/Confirm-NeededModules.ps1)
