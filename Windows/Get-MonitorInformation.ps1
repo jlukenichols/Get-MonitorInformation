@@ -1,4 +1,4 @@
-﻿<#
+<#
     Copyright (C) 2022  Stolpe.io
     <https://stolpe.io>
     This program is free software: you can redistribute it and/or modify
@@ -25,13 +25,10 @@ Function Get-MonitorInformation {
         .EXAMPLE
         Get-MonitorInformation
         Returns the information about the monitors on the local computer
-
         Get-MonitorInformation -ComputerName "Win11"
         Return information about the monitor on a remote computer named "Win11"
-
         Get-MonitorInformation -ComputerName "Win10,Win11"
         Return information about the monitor from both remote computer named Win10 and Win11
-
     #>
 
     [CmdletBinding()]
@@ -43,9 +40,16 @@ Function Get-MonitorInformation {
         try {
             Write-Host "`n== Monitor information from $($Computer) ==`n"
             Get-CimInstance -ComputerName $Computer -ClassName WmiMonitorID -Namespace root\wmi | Foreach-Object {
+                if ((($_.ManufacturerName | ForEach-Object { [char]$_ }) -join "") -eq "DEL") {
+                    $ManufacturerName = "Dell"
+                } elseif ((($_.ManufacturerName | ForEach-Object { [char]$_ }) -join "") -eq "ACI") {
+                    $ManufacturerName = "ASUS"
+                } else {
+                    $ManufacturerName = ($_.ManufacturerName | ForEach-Object { [char]$_ }) -join ""
+                }
                 [PSCustomObject]@{
-                    Active                = $_.Active
-                    'Manufacturer Name'   = ($_.Manufacturername | ForEach-Object { [char]$_ }) -join ""
+                    'Active'              = $_.Active
+                    'Manufacturer'        = $ManufacturerName
                     'Model'               = ($_.UserFriendlyName | ForEach-Object { [char]$_ }) -join ""
                     'Serial Number'       = ($_.SerialNumberID | ForEach-Object { [char]$_ }) -join ""
                     'Year Of Manufacture' = $_.YearOfManufacture
