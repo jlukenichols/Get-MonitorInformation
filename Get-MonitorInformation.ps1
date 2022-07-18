@@ -1,65 +1,32 @@
-<#
-    Copyright (C) 2022  Stolpe.io
-    <https://stolpe.io>
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#>
+[String]$ComputerName = "localhost"
 
-Function Get-MonitorInformation {
-    <#
-        .SYNOPSIS
-        Returns information about all the monitors that has been connected to the computer
-        .DESCRIPTION
-        With this script you can get information about all of the monitors that has been connected to a local or remote computer.
-        You can also run this against multiple remote computers at the same time.
-        .PARAMETER Computer
-        If you want to run this against a remote computer you specify which computer with this parameter.
-        .EXAMPLE
-        Get-MonitorInformation
-        Returns the information about the monitors on the local computer
-        Get-MonitorInformation -ComputerName "Win11"
-        Return information about the monitor on a remote computer named "Win11"
-        Get-MonitorInformation -ComputerName "Win10,Win11"
-        Return information about the monitor from both remote computer named Win10 and Win11
-    #>
+#Start the WinRM service if it isn't already running
+Start-Service "WinRM" -ErrorAction SilentlyContinue | Out-Null    
 
-    [CmdletBinding()]
-    Param(
-        [String]$ComputerName = "localhost"
-    )
-
-    foreach ($Computer in $ComputerName.Split(",").Trim()) {
-        try {
-            Write-Host "`n== Monitor information from $($Computer) ==`n"
-            Get-CimInstance -ComputerName $Computer -ClassName WmiMonitorID -Namespace root\wmi | Foreach-Object {
-                if ((($_.ManufacturerName | ForEach-Object { [char]$_ }) -join "") -eq "DEL") {
-                    $ManufacturerName = "Dell"
-                } elseif ((($_.ManufacturerName | ForEach-Object { [char]$_ }) -join "") -eq "ACI") {
-                    $ManufacturerName = "ASUS"
-                } else {
-                    $ManufacturerName = ($_.ManufacturerName | ForEach-Object { [char]$_ }) -join ""
-                }
-                [PSCustomObject]@{
-                    'Active'              = $_.Active
-                    'Manufacturer'        = $ManufacturerName
-                    'Model'               = ($_.UserFriendlyName | ForEach-Object { [char]$_ }) -join ""
-                    'Serial Number'       = ($_.SerialNumberID | ForEach-Object { [char]$_ }) -join ""
-                    'Year Of Manufacture' = $_.YearOfManufacture
-                    'Week Of Manufacture' = $_.WeekOfManufacture
-                }
-            } | Format-Table
-        }
-        catch {
-            Write-Error "$($PSItem.Exception)"
-            Continue
-        }
-    }
+foreach ($Computer in $ComputerName.Split(",").Trim()) {
+        Get-CimInstance -ComputerName $Computer -ClassName WmiMonitorID -Namespace root\wmi | Foreach-Object {
+            if ((($_.ManufacturerName | ForEach-Object { [char]$_ }) -join "") -eq "DEL") {
+                $ManufacturerName = "Dell"
+            } elseif ((($_.ManufacturerName | ForEach-Object { [char]$_ }) -join "") -eq "ACI") {
+                $ManufacturerName = "ASUS"
+            } elseif ((($_.ManufacturerName | ForEach-Object { [char]$_ }) -join "") -eq "SEC") {
+                $ManufacturerName = "Epson"
+            } elseif ((($_.ManufacturerName | ForEach-Object { [char]$_ }) -join "") -eq "ACR") {
+                $ManufacturerName = "Acer"
+            } elseif ((($_.ManufacturerName | ForEach-Object { [char]$_ }) -join "") -eq "UGD") {
+                $ManufacturerName = "XP-PEN"
+            } elseif ((($_.ManufacturerName | ForEach-Object { [char]$_ }) -join "") -eq "SAM") {
+                $ManufacturerName = "Samsung"
+            } else {
+                $ManufacturerName = ($_.ManufacturerName | ForEach-Object { [char]$_ }) -join ""
+            }
+            [PSCustomObject]@{
+                'Active'              = $_.Active
+                'Manufacturer'        = $ManufacturerName
+                'Model'               = ($_.UserFriendlyName | ForEach-Object { [char]$_ }) -join ""
+                'Serial Number'       = ($_.SerialNumberID | ForEach-Object { [char]$_ }) -join ""
+                'Year Of Manufacture' = $_.YearOfManufacture
+                'Week Of Manufacture' = $_.WeekOfManufacture
+            }
+        }        
 }
